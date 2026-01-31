@@ -1,5 +1,5 @@
-const staffService = require("../services/staff.service");
-const logger = require("../utils/logger");
+const staffService = require("../../services/staff.service");
+const logger = require("../../utils/logger");
 
 class StaffController {
   async list(req, res) {

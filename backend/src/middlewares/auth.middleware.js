@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const logger = require("../utils/logger");
+const logger = require("../../utils/logger");
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "super_secret_jwt_key_change_in_production";

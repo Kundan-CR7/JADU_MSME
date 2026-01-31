@@ -1,5 +1,5 @@
-const prisma = require("../src/controllers/utils/prisma");
-const logger = require("../src/controllers/utils/logger");
+const prisma = require("../../utils/prisma");
+const logger = require("../../utils/logger");
 
 class InventoryService {
   /**

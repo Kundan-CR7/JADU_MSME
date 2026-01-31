@@ -1,8 +1,8 @@
-const prisma = require("../utils/prisma");
+const prisma = require("../../utils/prisma");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { JWT_SECRET } = require("../middleware/auth.middleware");
-const logger = require("../utils/logger");
+const logger = require("../../utils/logger");
 
 class AuthController {
   async login(req, res) {

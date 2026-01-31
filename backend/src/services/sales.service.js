@@ -1,5 +1,5 @@
-const prisma = require("../utils/prisma");
-const logger = require("../utils/logger");
+const prisma = require("../../utils/prisma");
+const logger = require("../../utils/logger");
 const axios = require("axios");
 
 const AGENT_URL = process.env.AGENT_URL || "http://localhost:8000";
