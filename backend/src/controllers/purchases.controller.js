@@ -1,4 +1,4 @@
-const purchasesService = require("../../services/purchases.service");
+const purchasesService = require("../services/purchases.service");
 const logger = require("../../utils/logger");
 
 class PurchasesController {

@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Service (Node.js + Express + Prisma)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: backend.Dockerfile
+    container_name: inventory-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inventory_management
+      JWT_SECRET: your-secret-key-change-in-production
+      NODE_ENV: production
+      AGENT_SERVICE_URL: http://agent:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: sh -c "npx prisma migrate deploy && npm start"
+
+  # Agent Service (Python + FastAPI)
+  agent:
+    build:
+      context: ./agent
+      dockerfile: agent.Dockerfile
+    container_name: inventory-agent
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inventory_management
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./agent:/app
+
+  # Frontend Service (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.Dockerfile
+    container_name: inventory-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+      REACT_APP_AGENT_URL: http://localhost:8000
+
+volumes:
+  postgres_data:

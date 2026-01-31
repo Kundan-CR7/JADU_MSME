@@ -1,4 +1,4 @@
-const inventoryService = require("../../services/inventory.service");
+const inventoryService = require("../services/inventory.service");
 const logger = require("../../utils/logger");
 
 class InventoryController {

@@ -1,4 +1,4 @@
-const staffService = require("../../services/staff.service");
+const staffService = require("../services/staff.service");
 const logger = require("../../utils/logger");
 
 class StaffController {

@@ -1,5 +1,5 @@
-const prisma = require("../src/controllers/utils/prisma");
-const logger = require("../src/controllers/utils/logger");
+const prisma = require("../src/utils/prisma");
+const logger = require("../src/utils/logger");
 
 class AgentService {
   async getDecisionLogs(limit = 10) {

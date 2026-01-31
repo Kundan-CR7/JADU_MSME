@@ -1,4 +1,4 @@
-const taskService = require("../../services/tasks.service");
+const taskService = require("../services/tasks.service");
 const logger = require("../../utils/logger");
 
 class TaskController {

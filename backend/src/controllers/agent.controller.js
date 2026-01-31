@@ -1,4 +1,4 @@
-const agentService = require("../../services/agent.service");
+const agentService = require("../services/agent.service");
 
 class AgentController {
   async getLogs(req, res) {
