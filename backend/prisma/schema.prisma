@@ -40,6 +40,8 @@ model Item {
   inventoryTransactions InventoryTransaction[]
   saleItems             SaleItem[]
   purchases             Purchase[]
+  dailySales            DailySalesSummary[]
+  purchaseHistory       PurchaseHistory[]
 
   @@map("items")
 }
@@ -56,6 +58,7 @@ model Supplier {
   
   supplierItems       SupplierItem[]
   purchases           Purchase[]
+  purchaseHistory     PurchaseHistory[]
 
   @@map("suppliers")
 }
@@ -157,6 +160,7 @@ model Staff {
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 }
 
 // 10. Tasks
@@ -243,4 +247,38 @@ enum PurchaseStatus {
   PARTIAL
   RECEIVED
   CANCELLED
+}
+
+// 14. Daily Sales Summary
+model DailySalesSummary {
+  itemId        String   @map("item_id")
+  saleDate      DateTime @map("sale_date") @db.Date
+  totalQuantity Float    @default(0) @map("total_quantity")
+  totalRevenue  Float?   @map("total_revenue")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, saleDate])
+  @@map("daily_sales_summary")
+}
+
+// 15. Purchase History
+model PurchaseHistory {
+  id                Int      @id @default(autoincrement())
+  supplierId        String   @map("supplier_id")
+  itemId            String   @map("item_id")
+  price             Decimal  @db.Decimal(10, 2)
+  leadTimeDays      Int      @map("lead_time_days")
+  reliabilityScore  Decimal  @default(80.0) @map("reliability_score") @db.Decimal(5, 2)
+  urgencyLevel      Int      @map("urgency_level") // 1-10
+  actualDelayDays   Decimal  @default(0.0) @map("actual_delay_days") @db.Decimal(5, 2)
+  satisfactionScore Decimal? @map("satisfaction_score") @db.Decimal(5, 2) // 0-100
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  supplier          Supplier @relation(fields: [supplierId], references: [id])
+  item              Item     @relation(fields: [itemId], references: [id])
+
+  @@map("purchase_history")
 }

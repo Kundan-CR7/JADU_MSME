@@ -15,18 +15,23 @@
     "axios": "^1.4.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
+    "express-session": "^1.18.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
     "node-cron": "^3.0.2",
     "nodemon": "^3.1.11",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "express-session": "^1.18.0",
     "prisma": "^6.19.0",
     "uuid": "^9.0.0",
     "winston": "^3.10.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

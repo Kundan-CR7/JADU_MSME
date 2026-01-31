@@ -21,6 +21,8 @@ import {
 import RightSidebar from '../components/RightSidebar';
 import NotificationPanel from '../components/NotificationPanel';
 import InventoryView from '../components/InventoryView';
+import SuppliersView from '../components/SuppliersView';
+import StaffView from '../components/StaffView';
 import Settings from '../components/Settings';
 import {
     PieChart,
@@ -293,7 +295,7 @@ const Dashboard = () => {
                                     {/* Sales Pie Chart */}
                                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
                                         <h3 className="font-bold text-slate-800 mb-6">Sales by Category</h3>
-                                        <div className="flex-1 min-h-[200px] relative">
+                                        <div className="flex-1 h-[250px] relative">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
@@ -336,6 +338,10 @@ const Dashboard = () => {
                         )}
 
                         {activeTab === 'products' && <InventoryView />}
+
+                        {activeTab === 'staff' && <StaffView />}
+
+                        {activeTab === 'suppliers' && <SuppliersView />}
 
                         {activeTab === 'settings' && <Settings />}
 

@@ -12,6 +12,7 @@ const taskRoutes = require("./routes/tasks.routes");
 const inventoryRoutes = require("./routes/inventory.routes");
 const agentRoutes = require("./routes/agent.routes");
 const authRoutes = require("./routes/auth.routes");
+const suppliersRoutes = require("./routes/suppliers.routes");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/staff", staffRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/agent", agentRoutes);
+app.use("/suppliers", suppliersRoutes);
 
 // Health Check
 app.get("/health", (req, res) => {
