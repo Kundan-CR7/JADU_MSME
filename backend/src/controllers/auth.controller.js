@@ -75,50 +75,43 @@ class AuthController {
     }
   }
 
-  async googleLogin(req, res) {
-    const { OAuth2Client } = require('google-auth-library');
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
+  async googleCallback(req, res) {
     try {
-      const { token } = req.body;
-
-      const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      const payload = ticket.getPayload();
-      const { email, name, picture } = payload;
-
-      let user = await prisma.staff.findUnique({ where: { email } });
-
-      if (!user) {
-        // Create new user from Google
-        // Note: Password can be dummy or random since they use Google to login
-        const randomPassword = Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-        user = await prisma.staff.create({
-          data: {
-            name,
-            email,
-            password: hashedPassword,
-            role: "STAFF",
-            isAvailable: true
-          }
-        });
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication failed" });
       }
 
+      const user = req.user;
+
       // Generate Token
-      const jwtToken = jwt.sign(
+      const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
         { expiresIn: "24h" }
       );
 
-      res.json({ token: jwtToken, role: user.role, name: user.name });
+      // Redirect to frontend
+      res.redirect(`http://localhost:5173/login?token=${token}&name=${encodeURIComponent(user.name)}&role=${user.role}&avatar=${encodeURIComponent(user.avatar || "")}`);
     } catch (err) {
-      logger.error("Google Login Error", err);
-      res.status(401).json({ error: "Invalid Google Token" });
+      logger.error("Google Callback Error", err);
+      res.redirect('http://localhost:5173/login?error=auth_failed');
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      const { name } = req.body;
+      const userId = req.user.id;
+
+      const updatedUser = await prisma.staff.update({
+        where: { id: userId },
+        data: { name }
+      });
+
+      res.json({ name: updatedUser.name, role: updatedUser.role });
+    } catch (err) {
+      logger.error("Update Profile Error", err);
+      res.status(500).json({ error: "Failed to update profile" });
     }
   }
 
