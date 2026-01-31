@@ -1,5 +1,5 @@
-const inventoryService = require("../services/inventory.service");
-const logger = require("../utils/logger");
+const inventoryService = require("../../services/inventory.service");
+const logger = require("../../utils/logger");
 
 class InventoryController {
   async getExpiring(req, res) {

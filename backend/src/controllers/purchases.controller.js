@@ -1,5 +1,5 @@
-const purchasesService = require("../services/purchases.service");
-const logger = require("../utils/logger");
+const purchasesService = require("../../services/purchases.service");
+const logger = require("../../utils/logger");
 
 class PurchasesController {
   async receivePurchase(req, res) {

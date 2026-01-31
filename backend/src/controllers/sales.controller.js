@@ -1,5 +1,5 @@
-const salesService = require("../services/sales.service");
-const logger = require("../utils/logger");
+const salesService = require("../../services/sales.service");
+const logger = require("../../utils/logger");
 
 class SalesController {
   async createSale(req, res) {
