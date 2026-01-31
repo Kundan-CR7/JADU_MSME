@@ -1,16 +1,74 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, CheckSquare } from 'lucide-react';
+// import { GoogleLogin } from '@react-oauth/google';
 
 const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSignup = (e) => {
-    e.preventDefault();
-    navigate('/dashboard');
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    if (!agreed) {
+      setError('Please agree to the terms and conditions');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify({ name: data.name, role: data.role }));
+        navigate('/dashboard');
+      } else {
+        setError(data.error || 'Signup failed');
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //   const handleGoogleSuccess = async (credentialResponse) => {
+  //     try {
+  //       const response = await fetch('http://localhost:3000/api/auth/google', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ token: credentialResponse.credential })
+  //       });
+
+  //       const data = await response.json();
+
+  //       if (response.ok) {
+  //         localStorage.setItem('token', data.token);
+  //         localStorage.setItem('user', JSON.stringify({ name: data.name, role: data.role }));
+  //         navigate('/dashboard');
+  //       } else {
+  //         setError(data.error || 'Google Login failed');
+  //       }
+  //     } catch (err) {
+  //       setError('Google Login Error');
+  //     }
+  //   };
 
   return (
     <div className="flex min-h-screen w-full font-sans bg-white">
@@ -32,6 +90,12 @@ const Signup = () => {
         <div className="w-full max-w-[480px] mt-24 md:mt-12 mx-auto lg:mx-0">
           <h1 className="text-[32px] font-bold mb-8 text-[#1e293b] tracking-tight">Create an account</h1>
 
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSignup} className="flex flex-col gap-5">
 
             {/* Name Input */}
@@ -39,6 +103,9 @@ const Signup = () => {
               <label className="text-[13px] font-medium text-slate-600 ml-1">Name</label>
               <input
                 type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 className="w-full p-4 bg-[#F8FAFC] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#033543]/30 focus:bg-[#f1f5f9] transition-all"
                 placeholder="Enter your name"
                 required
@@ -50,6 +117,9 @@ const Signup = () => {
               <label className="text-[13px] font-medium text-slate-600 ml-1">Email</label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full p-4 bg-[#F8FAFC] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#033543]/30 focus:bg-[#f1f5f9] transition-all"
                 placeholder="Enter your mail"
                 required
@@ -62,6 +132,9 @@ const Signup = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full p-4 bg-[#F8FAFC] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#033543]/30 focus:bg-[#f1f5f9] transition-all pr-12"
                   placeholder="Enter your password"
                   required
@@ -90,8 +163,12 @@ const Signup = () => {
             </div>
 
             {/* Sign Up Button */}
-            <button type="submit" className="w-full py-4 bg-[#033543] text-white rounded-xl font-semibold text-[15px] hover:shadow-lg hover:shadow-[#033543]/20 hover:-translate-y-0.5 transition-all duration-300 mt-2 tracking-wide">
-              Sign up
+            <button
+              type="submit"
+              disabled={loading || !agreed}
+              className="w-full py-4 bg-[#033543] text-white rounded-xl font-semibold text-[15px] hover:shadow-lg hover:shadow-[#033543]/20 hover:-translate-y-0.5 transition-all duration-300 mt-2 tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating Account...' : 'Sign up'}
             </button>
 
             {/* Divider */}
@@ -102,12 +179,15 @@ const Signup = () => {
             </div>
 
             {/* Social Login */}
-            <div className="flex gap-4">
-              <button type="button" className="w-full py-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2.5 hover:bg-slate-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18" />
-                <span className="font-medium text-slate-700 text-[13px]">Google</span>
-              </button>
-            </div>
+            {/* <div className="flex gap-4 justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google Signup Failed')}
+                shape="pill"
+                width="300"
+                text="signup_with"
+              />
+            </div> */}
 
             <p className="text-center mt-6 text-slate-500 text-xs">
               Already have an account? <span onClick={() => navigate('/login')} className="text-[#033543] font-bold cursor-pointer hover:underline">Log in</span>
