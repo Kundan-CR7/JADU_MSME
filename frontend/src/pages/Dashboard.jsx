@@ -9,8 +9,10 @@ import {
     Search,
     Bell,
     Menu,
-    X
+    X,
+    Sparkles
 } from 'lucide-react';
+import RightSidebar from '../components/RightSidebar';
 import {
     PieChart,
     Pie,
@@ -28,6 +30,7 @@ import {
 const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
 
     // Mock Data
     const salesData = [
@@ -141,9 +144,19 @@ const Dashboard = () => {
                                 className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#033543]/20 w-64 transition-all"
                             />
                         </div>
+
                         <button className="p-2.5 relative rounded-xl hover:bg-slate-50 text-slate-500 transition-colors">
                             <Bell size={20} />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                        </button>
+
+                        <button
+                            onClick={() => setIsAiSidebarOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-[#033543] text-white rounded-xl hover:bg-[#054b5e] transition-all shadow-lg shadow-[#033543]/20 hover:shadow-[#033543]/30 active:scale-95 group"
+                            title="Ask AI Assistant"
+                        >
+                            <Sparkles size={18} className="group-hover:rotate-12 transition-transform duration-300" />
+                            <span className="text-sm font-semibold">Ask AI</span>
                         </button>
                     </div>
                 </header>
@@ -252,6 +265,12 @@ const Dashboard = () => {
                     </div>
                 </div>
             </main>
+
+            {/* AI Sidebar */}
+            <RightSidebar
+                isOpen={isAiSidebarOpen}
+                onClose={() => setIsAiSidebarOpen(false)}
+            />
         </div>
     );
 };
@@ -261,8 +280,8 @@ const SidebarItem = ({ icon, label, active, onClick }) => (
     <button
         onClick={onClick}
         className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group ${active
-                ? 'bg-white text-[#033543] font-semibold shadow-lg shadow-black/5'
-                : 'text-slate-300 hover:bg-white/10 hover:text-white'
+            ? 'bg-white text-[#033543] font-semibold shadow-lg shadow-black/5'
+            : 'text-slate-300 hover:bg-white/10 hover:text-white'
             }`}
     >
         <span className={active ? 'text-[#033543]' : 'text-slate-400 group-hover:text-white'}>
