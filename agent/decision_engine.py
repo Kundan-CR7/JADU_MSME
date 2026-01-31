@@ -26,6 +26,36 @@ class DecisionEngine:
             self._check_bottlenecks()
             self._check_expiry()
 
+    def assign_best_staff(self):
+        """
+        Finds the available staff member with the lowest current workload.
+        """
+        cur = self.db_conn.cursor()
+        query = """
+            SELECT s.id, s.name, COUNT(t.id) as task_count
+            FROM staff s
+            LEFT JOIN tasks t ON s.id = t.assigned_to AND t.status IN ('TODO', 'IN_PROGRESS')
+            WHERE s.isAvailable = TRUE
+            GROUP BY s.id, s.name
+            ORDER BY task_count ASC
+            LIMIT 1
+        """
+        try:
+            cur.execute(query)
+            best_staff = cur.fetchone() # (id, name, count)
+            cur.close()
+            
+            if best_staff:
+                log.info("staff_selected", staff=best_staff[1], load=best_staff[2])
+                return {"id": best_staff[0], "name": best_staff[1], "load": best_staff[2]}
+            
+            log.warn("no_staff_available")
+            return None
+        except Exception as e:
+            log.error("assign_staff_error", error=str(e))
+            if cur: cur.close()
+            return None
+
     def _handle_sale_trigger(self, payload):
         invoice_id = payload.get('invoiceId')
         items = self._get_items_from_invoice(invoice_id)

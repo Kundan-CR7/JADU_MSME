@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: inventory_management
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,11 +23,15 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: backend.Dockerfile
+      dockerfile: Dockerfile
     container_name: inventory-backend
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inventory_management
-      JWT_SECRET: your-secret-key-change-in-production
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
       NODE_ENV: production
       AGENT_SERVICE_URL: http://agent:8000
     ports:
@@ -38,16 +42,16 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: sh -c "npx prisma migrate deploy && npm start"
+    command: sh -c "npx prisma db push && npm run dev"
 
   # Agent Service (Python + FastAPI)
   agent:
     build:
       context: ./agent
-      dockerfile: agent.Dockerfile
+      dockerfile: Dockerfile
     container_name: inventory-agent
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inventory_management
+      DATABASE_URL: ${DATABASE_URL}
       BACKEND_URL: http://backend:3000
     ports:
       - "8000:8000"
@@ -61,10 +65,10 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: frontend.Dockerfile
+      dockerfile: Dockerfile
     container_name: inventory-frontend
     ports:
-      - "80:80"
+      - "5173:5173"
     depends_on:
       - backend
     environment:

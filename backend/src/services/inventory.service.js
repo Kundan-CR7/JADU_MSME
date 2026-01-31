@@ -60,6 +60,44 @@ class InventoryService {
       throw error;
     }
   }
+
+  /**
+   * FEFO Allocation Logic (Planning/Simulation)
+   * @param {string} itemId 
+   * @param {number} qtyNeeded 
+   */
+  async allocateStockFEFO(itemId, qtyNeeded) {
+    try {
+      const batches = await prisma.inventoryBatch.findMany({
+        where: { itemId: itemId, quantity: { gt: 0 } },
+        orderBy: { expiryDate: 'asc' } // FEFO: Earliest expiry first
+      });
+
+      let remaining = qtyNeeded;
+      const allocation = [];
+
+      for (const batch of batches) {
+        if (remaining <= 0) break;
+        
+        const take = Math.min(batch.quantity, remaining);
+        allocation.push({ 
+          batchId: batch.id, 
+          qty: take, 
+          expiry: batch.expiryDate,
+          batchNumber: batch.batchNumber
+        });
+        remaining -= take;
+      }
+
+      if (remaining > 0) {
+        return { feasible: false, shortfall: remaining, allocation };
+      }
+      return { feasible: true, allocation }; 
+    } catch (error) {
+      logger.error("Allocate Stock FEFO Error", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new InventoryService();
