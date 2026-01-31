@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const session = require("express-session");
+const passport = require("./config/passport");
 const logger = require("./utils/logger");
 const salesRoutes = require("./routes/sales.routes");
 const purchasesRoutes = require("./routes/purchases.routes");
@@ -18,6 +20,16 @@ app.enable("trust proxy"); // Required if behind Nginx/Proxy
 app.use(helmet());
 app.use(cors()); // Configure origin in production
 app.use(express.json());
+
+app.use(session({
+  secret: process.env.JWT_SECRET || 'secret_key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

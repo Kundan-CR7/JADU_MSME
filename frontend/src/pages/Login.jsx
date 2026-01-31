@@ -42,26 +42,26 @@ const Login = () => {
         }
     };
 
-    const handleGoogleSuccess = async (credentialResponse) => {
-        try {
-            const response = await fetch('http://localhost:3000/auth/google', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: credentialResponse.credential })
-            });
+    // Check for tokens in URL on component mount
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const name = params.get('name');
+        const role = params.get('role');
+        const avatar = params.get('avatar');
+        const error = params.get('error');
 
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify({ name: data.name, role: data.role }));
-                navigate('/dashboard');
-            } else {
-                setError(data.error || 'Google Login failed');
-            }
-        } catch (err) {
-            setError('Google Login Error');
+        if (token && name && role) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify({ name, role, avatar }));
+            navigate('/dashboard');
+        } else if (error) {
+            setError('Google Login Failed');
         }
+    }, [navigate]);
+
+    const handleGoogleLogin = () => {
+        window.location.href = 'http://localhost:3000/auth/google';
     };
 
     return (
@@ -149,14 +149,16 @@ const Login = () => {
                         </div>
 
                         {/* Social Login */}
-                        {/* <div className="flex gap-4 justify-center">
-                            <GoogleLogin
-                                onSuccess={handleGoogleSuccess}
-                                onError={() => setError('Google Login Failed')}
-                                shape="pill"
-                                width="300"
-                            />
-                        </div> */}
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-all font-sans"
+                            >
+                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                                Continue with Google
+                            </button>
+                        </div>
 
                         <p className="text-center mt-6 text-slate-500 text-xs">
                             Don't have an account? <span onClick={() => navigate('/signup')} className="text-[#033543] font-bold cursor-pointer hover:underline">Sign up</span>

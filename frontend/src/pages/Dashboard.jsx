@@ -15,12 +15,13 @@ import {
     UserCog,
     Truck,
     FileText,
-    Settings,
+    Settings as SettingsIcon,
     HelpCircle
 } from 'lucide-react';
 import RightSidebar from '../components/RightSidebar';
 import NotificationPanel from '../components/NotificationPanel';
 import InventoryView from '../components/InventoryView';
+import Settings from '../components/Settings';
 import {
     PieChart,
     Pie,
@@ -38,6 +39,14 @@ import {
 const Dashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [user, setUser] = useState({ name: 'User', role: 'STAFF' });
+
+    React.useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, [activeTab]); // Refresh user data when tab changes (in case updated in settings)
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -132,7 +141,7 @@ const Dashboard = () => {
                     <div className="mt-6 space-y-2">
                         <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">General</p>
                         <SidebarItem
-                            icon={<Settings size={20} />}
+                            icon={<SettingsIcon size={20} />}
                             label="Settings"
                             active={activeTab === 'settings'}
                             onClick={() => setActiveTab('settings')}
@@ -146,15 +155,18 @@ const Dashboard = () => {
                     </div>
                 </nav>
 
-                {/* User Profile */}
                 <div className="mt-auto pt-6 border-t border-white/10 px-6">
                     <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold border border-white/10 group-hover:bg-white group-hover:text-[#033543] transition-colors shadow-inner">
-                            JD
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold border border-white/10 group-hover:bg-white group-hover:text-[#033543] transition-colors shadow-inner uppercase overflow-hidden">
+                            {user.avatar ? (
+                                <img src={decodeURIComponent(user.avatar)} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                user.name.charAt(0)
+                            )}
                         </div>
                         <div className="flex-1 text-left">
-                            <div className="text-sm font-semibold group-hover:text-white transition-colors">Jadu</div>
-                            <div className="text-xs text-slate-400 group-hover:text-slate-300">Admin</div>
+                            <div className="text-sm font-semibold group-hover:text-white transition-colors truncate w-32">{user.name}</div>
+                            <div className="text-xs text-slate-400 group-hover:text-slate-300 uppercase">{user.role}</div>
                         </div>
                         <LogOut size={18} className="text-slate-400 group-hover:text-red-400 transition-colors" />
                     </button>
@@ -324,6 +336,8 @@ const Dashboard = () => {
                         )}
 
                         {activeTab === 'products' && <InventoryView />}
+
+                        {activeTab === 'settings' && <Settings />}
 
                     </div>
                 </div>

@@ -151,6 +151,7 @@ model Staff {
   role      String   @default("STAFF") // ADMIN, STAFF
   email     String   @unique
   password  String   // Hashed password
+  avatar    String?
   isAvailable Boolean @default(true)
   currentLoad Int     @default(0)
   tasks     Task[]
