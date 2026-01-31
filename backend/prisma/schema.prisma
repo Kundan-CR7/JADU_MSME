@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Categories
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+  items       Item[]
+
+  @@map("categories")
+}
+
+// 2. Items
+model Item {
+  id                    String                 @id @default(uuid())
+  code                  String                 @unique
+  name                  String
+  categoryId            String?                @map("category_id")
+  description           String?
+  costPrice             Decimal                @map("cost_price") @db.Decimal(10, 2)
+  sellingPrice          Decimal                @map("selling_price") @db.Decimal(10, 2)
+  reorderPoint          Int                    @default(10) @map("reorder_point")
+  isActive              Boolean                @default(true) @map("is_active")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  deletedAt             DateTime?              @map("deleted_at")
+  
+  category              Category?              @relation(fields: [categoryId], references: [id])
+  supplierItems         SupplierItem[]
+  inventoryBatches      InventoryBatch[]
+  inventoryTransactions InventoryTransaction[]
+  saleItems             SaleItem[]
+  purchases             Purchase[]
+
+  @@map("items")
+}
+
+// 3. Suppliers
+model Supplier {
+  id                  String         @id @default(uuid())
+  name                String
+  contactInfo         String?        @map("contact_info")
+  reliabilityScore    Decimal        @default(1.00) @map("reliability_score") @db.Decimal(3, 2)
+  avgDeliveryTimeDays Int?           @map("avg_delivery_time_days")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  deletedAt           DateTime?      @map("deleted_at")
+  
+  supplierItems       SupplierItem[]
+  purchases           Purchase[]
+
+  @@map("suppliers")
+}
+
+// 4. Supplier Items (Matrix)
+model SupplierItem {
+  id           String   @id @default(uuid())
+  supplierId   String   @map("supplier_id")
+  itemId       String   @map("item_id")
+  price        Decimal  @db.Decimal(10, 2)
+  leadTimeDays Int      @map("lead_time_days")
+  
+  supplier     Supplier @relation(fields: [supplierId], references: [id])
+  item         Item     @relation(fields: [itemId], references: [id])
+
+  @@unique([supplierId, itemId])
+  @@map("supplier_items")
+}
+
+// 5. Inventory Batches (FEFO)
+model InventoryBatch {
+  id                    String                 @id @default(uuid())
+  itemId                String                 @map("item_id")
+  batchNumber           String?                @map("batch_number")
+  quantity              Int
+  expiryDate            DateTime?              @map("expiry_date") @db.Date
+  receivedDate          DateTime               @default(now()) @map("received_date") @db.Date
+  createdAt             DateTime               @default(now()) @map("created_at")
+  
+  item                  Item                   @relation(fields: [itemId], references: [id])
+  inventoryTransactions InventoryTransaction[]
+  saleItems             SaleItem[]
+
+  @@map("inventory_batches")
+}
+
+// 6. Inventory Transactions
+model InventoryTransaction {
+  id             String          @id @default(uuid())
+  itemId         String          @map("item_id")
+  batchId        String?         @map("batch_id")
+  changeType     ChangeType      @map("change_type")
+  quantityChange Int             @map("quantity_change")
+  referenceId    String?         @map("reference_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  item           Item            @relation(fields: [itemId], references: [id])
+  batch          InventoryBatch? @relation(fields: [batchId], references: [id])
+
+  @@map("inventory_transactions")
+}
+
+// 7. Sales
+model Sale {
+  id          String     @id @default(uuid())
+  invoiceId   String     @unique @map("invoice_id")
+  totalAmount Decimal    @map("total_amount") @db.Decimal(12, 2)
+  customerName String?   @map("customer_name")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  
+  items       SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String          @id @default(uuid())
+  saleId      String          @map("sale_id")
+  itemId      String          @map("item_id")
+  quantity    Int
+  unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
+  batchIdUsed String?         @map("batch_id_used")
+  
+  sale        Sale            @relation(fields: [saleId], references: [id])
+  item        Item            @relation(fields: [itemId], references: [id])
+  batch       InventoryBatch? @relation(fields: [batchIdUsed], references: [id])
+
+  @@map("sale_items")
+}
+
+// 8. Processed Invoices (Idempotency)
+model ProcessedInvoice {
+  invoiceId   String   @id @map("invoice_id")
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("processed_invoices")
+}
+
+// 9. Staff
+model Staff {
+  id        String   @id @default(uuid())
+  name      String
+  role      String   @default("STAFF") // ADMIN, STAFF
+  email     String   @unique
+  password  String   // Hashed password
+  isAvailable Boolean @default(true)
+  currentLoad Int     @default(0)
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 10. Tasks
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("TODO") // TODO, IN_PROGRESS, DONE
+  priority    String   @default("MEDIUM")
+  assignedTo  String?
+  assignee    Staff?   @relation(fields: [assignedTo], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  statusChangedAt DateTime @default(now())
+
+  @@map("tasks")
+}
+
+// 11. Purchases
+model Purchase {
+  id                   String     @id @default(uuid())
+  supplierId           String     @map("supplier_id")
+  itemId               String     @map("item_id")
+  quantityOrdered      Int        @map("quantity_ordered")
+  quantityReceived     Int        @default(0) @map("quantity_received")
+  status               PurchaseStatus @default(ORDERED)
+  orderDate            DateTime   @default(now()) @map("order_date")
+  expectedDeliveryDate DateTime?  @map("expected_delivery_date")
+  actualDeliveryDate   DateTime?  @map("actual_delivery_date")
+  qualityNote          String?    @map("quality_note") // 'GOOD', 'DAMAGED'
+  
+  supplier             Supplier   @relation(fields: [supplierId], references: [id])
+  item                 Item       @relation(fields: [itemId], references: [id])
+
+  @@map("purchases")
+}
+
+// 12. Agent Decision Logs
+model AgentDecisionLog {
+  id            String   @id @default(uuid())
+  decisionType  String   @map("decision_type")
+  relatedItemId String?  @map("related_item_id")
+  relatedTaskId String?  @map("related_task_id")
+  decisionText  String   @map("decision_text")
+  context       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("agent_decision_logs")
+}
+
+// 13. Scoring Rules
+model ScoringRule {
+  ruleKey     String  @id @map("rule_key")
+  weightValue Decimal @map("weight_value") @db.Decimal(3, 2)
+  description String?
+
+  @@map("scoring_rules")
+}
+
+// Enums
+enum ChangeType {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RETURN
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PurchaseStatus {
+  ORDERED
+  PARTIAL
+  RECEIVED
+  CANCELLED
+}
