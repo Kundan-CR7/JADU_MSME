@@ -8,7 +8,7 @@ class InventoryController {
       const batches = await inventoryService.getExpiringBatches(days);
       res.json(batches);
     } catch (err) {
-      res.status(500).json({ error: "Failed to fetch alerts" });
+      res.status(500).json({ error: err.message || "Failed to fetch alerts" });
     }
   }
 
@@ -18,7 +18,9 @@ class InventoryController {
       res.json(stats);
     } catch (err) {
       logger.error("Inventory Stats Error", err);
-      res.status(500).json({ error: "Failed to fetch inventory stats" });
+      res
+        .status(500)
+        .json({ error: err.message || "Failed to fetch inventory stats" });
     }
   }
 
@@ -27,7 +29,9 @@ class InventoryController {
       const items = await inventoryService.getAllItems();
       res.json(items);
     } catch (err) {
-      res.status(500).json({ error: "Failed to fetch inventory" });
+      res
+        .status(500)
+        .json({ error: err.message || "Failed to fetch inventory" });
     }
   }
 
@@ -36,7 +40,9 @@ class InventoryController {
       const categories = await inventoryService.getAllCategories();
       res.json(categories);
     } catch (err) {
-      res.status(500).json({ error: "Failed to fetch categories" });
+      res
+        .status(500)
+        .json({ error: err.message || "Failed to fetch categories" });
     }
   }
 
@@ -46,7 +52,7 @@ class InventoryController {
       res.status(201).json(item);
     } catch (err) {
       logger.error("Create Item Error", err);
-      res.status(500).json({ error: "Failed to create item" });
+      res.status(500).json({ error: err.message || "Failed to create item" });
     }
   }
 
@@ -56,7 +62,7 @@ class InventoryController {
       res.json(item);
     } catch (err) {
       logger.error("Update Item Error", err);
-      res.status(500).json({ error: "Failed to update item" });
+      res.status(500).json({ error: err.message || "Failed to update item" });
     }
   }
 

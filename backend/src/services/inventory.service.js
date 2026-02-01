@@ -69,6 +69,21 @@ class InventoryService {
   async createItem(data) {
     const { code, name, category, costPrice, sellingPrice, reorderPoint, initialStock } = data;
 
+    const cost = parseFloat(costPrice) || 0;
+    const price = parseFloat(sellingPrice) || 0;
+
+    if (price < cost) {
+      throw new Error(
+        `Selling Price (${price}) cannot be lower than Cost Price (${cost})`,
+      );
+    }
+
+    if (price < 0 || cost < 0) {
+      throw new Error(
+        "Prices cannot be negative"
+      )
+    }
+
     // 1. Get or Create Category
     let categoryId;
     if (category) {
