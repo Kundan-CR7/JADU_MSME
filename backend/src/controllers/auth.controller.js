@@ -90,11 +90,19 @@ class AuthController {
         { expiresIn: "24h" }
       );
 
-      // Redirect to frontend
-      res.redirect(`http://localhost:5173/login?token=${token}&name=${encodeURIComponent(user.name)}&role=${user.role}&avatar=${encodeURIComponent(user.avatar || "")}`);
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+     const redirectUrl = new URL("/login", frontendUrl);
+     redirectUrl.searchParams.append("token", token);
+     redirectUrl.searchParams.append("name", user.name);
+     redirectUrl.searchParams.append("role", user.role);
+     redirectUrl.searchParams.append("avatar", user.avatar || "");
+
+     res.redirect(redirectUrl.toString());
     } catch (err) {
       logger.error("Google Callback Error", err);
-      res.redirect('http://localhost:5173/login?error=auth_failed');
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
   }
 

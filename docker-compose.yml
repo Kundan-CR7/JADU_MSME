@@ -26,6 +26,7 @@ services:
       dockerfile: Dockerfile
     container_name: inventory-backend
     environment:
+      FRONTEND_URL: ${FRONTEND_URL}
       DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -42,7 +43,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: sh -c "npx prisma db push && npm run dev"
+    command: sh -c "npx prisma migrate deploy && node src/server.js"
 
   # Agent Service (Python + FastAPI)
   agent:
@@ -72,8 +73,8 @@ services:
     depends_on:
       - backend
     environment:
-      REACT_APP_API_URL: http://localhost:3000
-      REACT_APP_AGENT_URL: http://localhost:8000
+      VITE_API_URL: http://localhost:3000
+      VITE_AGENT_URL: http://localhost:8000
 
 volumes:
   postgres_data:
