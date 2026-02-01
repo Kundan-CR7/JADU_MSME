@@ -43,7 +43,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: sh -c "npx prisma migrate deploy && node src/server.js"
+    command: sh -c "npx prisma db push && npm run dev"
 
   # Agent Service (Python + FastAPI)
   agent:
