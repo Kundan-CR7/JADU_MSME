@@ -28,6 +28,7 @@ import NotificationPanel from '../components/NotificationPanel';
 import InventoryView from '../components/InventoryView';
 import SuppliersView from '../components/SuppliersView';
 import StaffView from '../components/StaffView';
+import SalesView from '../components/SalesView';
 import Settings from '../components/Settings';
 import {
     PieChart,
@@ -497,13 +498,7 @@ const Dashboard = () => {
 
                         {activeTab === 'settings' && <Settings />}
 
-                        {activeTab === 'sales' && (
-                            <div className="flex flex-col items-center justify-center h-96 bg-white rounded-2xl border border-dashed border-slate-300">
-                                <ShoppingBag size={48} className="text-slate-300 mb-4" />
-                                <h3 className="text-lg font-bold text-slate-700">Sales Module</h3>
-                                <p className="text-slate-500">Full sales history view coming soon.</p>
-                            </div>
-                        )}
+                        {activeTab === 'sales' && <SalesView />}
 
                         {activeTab === 'ailogs' && (
                             <div className="flex flex-col items-center justify-center h-96 bg-white rounded-2xl border border-dashed border-slate-300">
