@@ -1,8 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import API_BASE_URL from '../api';
-
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 import {
@@ -14,23 +12,17 @@ import {
     CheckCircle2,
     ArrowUpDown,
     Download,
-
     Upload,
     Trash2,
     Edit2,
     X,
     Save,
-    FileText
-
+    FileText,
     Settings as SettingsIcon,
-    X,
-    Save
-
 } from 'lucide-react';
 
 const InventoryView = () => {
     const [products, setProducts] = useState([]);
-
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -43,6 +35,10 @@ const InventoryView = () => {
     // Stock Edit Modal State
     const [isStockModalOpen, setIsStockModalOpen] = useState(false);
     const [stockAdjustment, setStockAdjustment] = useState({ id: null, name: '', amount: '' });
+
+    // Manual Adjustment State
+    const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+    const [adjustForm, setAdjustForm] = useState({ itemId: '', batchId: '', quantityChange: 0, reason: '' });
 
     // Category "Add New" State
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -57,7 +53,7 @@ const InventoryView = () => {
         sellingPrice: '',
         reorderPoint: 10,
         initialStock: 0,
-        stock: 0, // For editing absolute stock
+        stock: 0,
         isActive: true
     });
 
@@ -107,7 +103,8 @@ const InventoryView = () => {
                 costPrice: item.costPrice,
                 sellingPrice: item.sellingPrice,
                 status: item.isActive ? 'ACTIVE' : 'INACTIVE',
-                isActive: item.isActive
+                isActive: item.isActive,
+                currentStock: item.currentStock || 0
             }));
 
             setProducts(mappedProducts);
@@ -115,26 +112,9 @@ const InventoryView = () => {
         } catch (err) {
             console.error('Error fetching inventory:', err);
             setError('Failed to load inventory data');
-    const [loading, setLoading] = useState(true);
-    const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-    const [adjustForm, setAdjustForm] = useState({ itemId: '', batchId: '', quantityChange: 0, reason: '' });
-
-    // Fetch Real Data
-    const fetchInventory = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:3000/inventory', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProducts(res.data);
-        } catch (err) {
-            console.error("Failed to fetch inventory", err);
-        } finally {
-
             setLoading(false);
         }
     };
-
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -158,7 +138,7 @@ const InventoryView = () => {
                 sellingPrice: product.sellingPrice || '',
                 reorderPoint: product.reorderPoint || 10,
                 initialStock: 0,
-                stock: product.stock || 0, // allow editing current stock
+                stock: product.stock || 0,
                 isActive: product.isActive ?? true
             });
         } else {
@@ -325,6 +305,22 @@ const InventoryView = () => {
         }
     };
 
+    const handleAdjustSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/inventory/adjust`, adjustForm, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setIsAdjustModalOpen(false);
+            fetchInventory(); // Refresh
+            setAdjustForm({ itemId: '', batchId: '', quantityChange: 0, reason: '' });
+        } catch (err) {
+            alert('Failed to adjust stock: ' + (err.response?.data?.error || err.message));
+        }
+    };
+
+    // Render Logic
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -343,29 +339,10 @@ const InventoryView = () => {
     }
 
     const totalProducts = products.length;
-    const totalValue = products.reduce((acc, curr) => acc + (Number(curr.sellingPrice) * curr.stock), 0);
+    // Calculate total value safely
+    const totalValue = products.reduce((acc, curr) => acc + (Number(curr.sellingPrice || 0) * (curr.stock || 0)), 0);
     const lowStockCount = products.filter(p => p.stock <= p.reorderPoint).length;
     const outOfStockCount = products.filter(p => p.stock === 0).length;
-
-    useEffect(() => {
-        fetchInventory();
-    }, []);
-
-    const handleAdjustSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:3000/inventory/adjust', adjustForm, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setIsAdjustModalOpen(false);
-            fetchInventory(); // Refresh
-            setAdjustForm({ itemId: '', batchId: '', quantityChange: 0, reason: '' });
-        } catch (err) {
-            alert('Failed to adjust stock: ' + (err.response?.data?.error || err.message));
-        }
-    };
-
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 relative">
@@ -391,16 +368,16 @@ const InventoryView = () => {
                     <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm font-medium text-sm">
                         <Download size={18} />
                         Export
+                    </button>
 
-                <div className="flex gap-3">
                     <button
                         onClick={() => setIsAdjustModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm font-medium text-sm"
                     >
                         <SettingsIcon size={18} />
                         Manual Adjustment
-
                     </button>
+
                     <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 bg-[#033543] text-white rounded-xl hover:bg-[#054b5e] transition-all shadow-lg shadow-[#033543]/20 hover:shadow-[#033543]/30 active:scale-95 font-medium text-sm">
                         <Plus size={18} />
                         Add Product
@@ -408,24 +385,16 @@ const InventoryView = () => {
                 </div>
             </div>
 
-            {/* Stats Cards (Static for now, can be dynamic later) */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
                 <StatCard label="Total Products" value={totalProducts} color="blue" />
                 <StatCard label="Total Value" value={`₹ ${(totalValue / 1000).toFixed(1)}k`} color="emerald" />
                 <StatCard label="Low Stock Items" value={lowStockCount} color="amber" />
                 <StatCard label="Out of Stock" value={outOfStockCount} color="red" />
-
-                <StatCard label="Total Products" value={products.length} color="blue" />
-                <StatCard label="Total Value" value={`₹ ${products.reduce((acc, p) => acc + (p.currentStock * p.sellingPrice), 0).toLocaleString()}`} color="emerald" />
-                <StatCard label="Low Stock Items" value={products.filter(p => p.currentStock <= p.reorderPoint).length} color="amber" />
-                <StatCard label="Out of Stock" value={products.filter(p => p.currentStock === 0).length} color="red" />
-
             </div>
 
             {/* Filters & Table Container */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-
                 <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50">
                     <div className="relative w-full sm:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -463,25 +432,6 @@ const InventoryView = () => {
                                 </tr>
                             ) : (
                                 products.map((product) => (
-
-                {/* Table */}
-                <div className="overflow-x-auto">
-                    {loading ? (
-                        <div className="p-8 text-center text-slate-500">Loading Inventory...</div>
-                    ) : (
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="p-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Info</th>
-                                    <th className="p-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
-                                    <th className="p-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</th>
-                                    <th className="p-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Price (Sell)</th>
-                                    <th className="p-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {products.map((product) => (
-
                                     <tr key={product.id} className="hover:bg-slate-50/80 transition-colors group">
                                         <td className="p-4">
                                             <div className="flex flex-col">
@@ -491,7 +441,6 @@ const InventoryView = () => {
                                         </td>
                                         <td className="p-4">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-
                                                 {product.category}
                                             </span>
                                         </td>
@@ -512,28 +461,11 @@ const InventoryView = () => {
                                                     Low Stock (Min: {product.reorderPoint})
                                                 </span>
                                             )}
-
-                                                {product.category?.name || 'Uncategorized'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full ${product.currentStock === 0 ? 'bg-red-500' :
-                                                    product.currentStock <= product.reorderPoint ? 'bg-amber-500' :
-                                                        'bg-emerald-500'
-                                                    }`}></div>
-                                                <span className={`text-sm font-medium ${product.currentStock <= product.reorderPoint ? 'text-amber-600' : 'text-slate-700'
-                                                    }`}>
-                                                    {product.currentStock} Units
-                                                </span>
-                                            </div>
-
                                         </td>
                                         <td className="p-4">
                                             <span className="font-semibold text-slate-700 text-sm">₹ {product.sellingPrice}</span>
                                         </td>
                                         <td className="p-4">
-
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${product.status === 'ACTIVE'
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                                 : 'bg-slate-50 text-slate-600 border-slate-200'
@@ -556,23 +488,7 @@ const InventoryView = () => {
                             )}
                         </tbody>
                     </table>
-
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${product.isActive
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                : 'bg-slate-50 text-slate-600 border-slate-200'
-                                                }`}>
-                                                {product.isActive ? 'ACTIVE' : 'INACTIVE'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-
                 </div>
-            </div>
-
 
                 <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center">
                     <span className="text-sm text-slate-500">Showing <span className="font-semibold text-slate-900">{products.length}</span> items</span>
@@ -823,6 +739,7 @@ const InventoryView = () => {
                         </form>
                     </div>
                 </div>
+            )}
 
             {/* Manual Adjustment Modal */}
             {isAdjustModalOpen && (
@@ -889,7 +806,6 @@ const InventoryView = () => {
                         </form>
                     </div>
                 </div>
-
             )}
         </div>
     );

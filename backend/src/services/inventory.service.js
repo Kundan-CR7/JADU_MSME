@@ -292,8 +292,7 @@ class InventoryService {
           reject(err);
         });
     });
-
-
+  }
   /**
    * FEFO Allocation Logic (Planning/Simulation)
    * @param {string} itemId 
@@ -311,11 +310,11 @@ class InventoryService {
 
       for (const batch of batches) {
         if (remaining <= 0) break;
-        
+
         const take = Math.min(batch.quantity, remaining);
-        allocation.push({ 
-          batchId: batch.id, 
-          qty: take, 
+        allocation.push({
+          batchId: batch.id,
+          qty: take,
           expiry: batch.expiryDate,
           batchNumber: batch.batchNumber
         });
@@ -325,7 +324,7 @@ class InventoryService {
       if (remaining > 0) {
         return { feasible: false, shortfall: remaining, allocation };
       }
-      return { feasible: true, allocation }; 
+      return { feasible: true, allocation };
     } catch (error) {
       logger.error("Allocate Stock FEFO Error", error);
       throw error;
